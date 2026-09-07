@@ -1,5 +1,6 @@
 import React from 'react';
 import { useStore } from '../store/useStore.js';
+import Spinner from './Spinner.jsx';
 
 // Panneau d'alerte de collision.
 //
@@ -141,9 +142,10 @@ export default function SystemAlert() {
         type="button"
         onClick={autoCorrect}
         disabled={correcting}
-        className="mt-3 w-full rounded border border-alert/60 bg-alert/15 py-2 font-mono text-[12px] uppercase tracking-[0.18em] text-alert transition-colors hover:bg-alert/25 disabled:cursor-wait disabled:opacity-60"
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded border border-alert/60 bg-alert/15 py-2 font-mono text-[12px] uppercase tracking-[0.18em] text-alert transition-colors hover:bg-alert/25 disabled:cursor-wait disabled:opacity-60"
       >
-        {correcting ? 'Recherche en cours...' : attempted ? 'Reessayer' : 'Auto-correct path'}
+        {correcting && <Spinner />}
+        {correcting ? 'Searching…' : attempted ? 'Retry' : 'Auto-correct path'}
       </button>
 
       {attempted && correction.change && (

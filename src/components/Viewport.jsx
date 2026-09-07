@@ -548,6 +548,7 @@ function ViewModeControl() {
         <button
           key={m.id}
           type="button"
+          data-testid={`view-${m.id}`}
           onClick={() => setViewMode(m.id)}
           title={t(m.hint)}
           aria-pressed={viewMode === m.id}

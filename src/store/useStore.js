@@ -9,18 +9,24 @@ import { propBounds, inferActorType, PROXY_BOUNDS } from '../proxies/registry.js
 import { compileModel } from '../proxies/AIModel.jsx';
 import { buildSeedancePrompt } from '../export/seedance.js';
 import { CAPTURE_SIZES } from '../export/recorder.js';
-import { buildSeedancePayload, createSeedanceTask, pollTask } from '../api/seedance.js';
+import { buildSeedancePayload, createSeedanceTask, pollTask, getTaskDetail, isSuccess, isFailure } from '../api/seedance.js';
 import { uploadBlob, isUsableAssetUrl } from '../api/upload.js';
 
 const KEY_STORAGE = 'blocking3d.apiKey';
 const LANG_STORAGE = 'blocking3d.lang';
 
-const readLang = () => {
+/**
+ * Langue de l'interface.
+ *
+ * L'anglais est la langue par defaut, sans exception : suivre la langue du
+ * navigateur faisait s'ouvrir l'application en francais chez la moitie des
+ * visiteurs, alors que le depot et sa documentation sont en anglais. Seul un
+ * choix explicite, conserve dans le navigateur, deroge a ce defaut.
+ */
+export const readLang = () => {
   try {
     const saved = localStorage.getItem(LANG_STORAGE);
-    if (saved === 'en' || saved === 'fr') return saved;
-    // Premiere visite : on suit la langue du navigateur, l'anglais par defaut.
-    return navigator.language?.toLowerCase().startsWith('fr') ? 'fr' : 'en';
+    return saved === 'fr' ? 'fr' : 'en';
   } catch {
     return 'en';
   }
@@ -107,6 +113,10 @@ export const useStore = create((set, get) => ({
     urls: [],
     elapsed: 0,
   },
+
+  // Ping de tache : confirmation que kie.ai a bien pris la tache, et
+  // verification manuelle d'un identifiant colle a la main.
+  taskPing: null, // { state, progress, credits, createTime, model, checking, error }
 
   // Reglages de rendu et prompt edite : dans le store, pas dans le composant.
   // La capture demontait l'ecran de rendu et emportait tout avec elle.
@@ -937,22 +947,133 @@ export const useStore = create((set, get) => ({
         callBackUrl,
       });
       const taskId = await createSeedanceTask({ apiKey, payload });
-      setRender({ status: 'polling', message: 'Rendu en cours...', taskId });
+      setRender({ status: 'polling', message: '', taskId });
+
+      // Confirmation immediate : sans elle, rien ne dit entre la soumission et
+      // le premier tick que kie.ai a bien enregistre la tache.
+      try {
+        const first = await getTaskDetail({ apiKey, taskId });
+        set({
+          taskPing: {
+            taskId,
+            state: first.state,
+            progress: first.progress,
+            credits: first.creditsConsumed,
+            createTime: first.createTime,
+            model: first.model,
+            accepted: true,
+            checking: false,
+            error: null,
+          },
+        });
+      } catch {
+        // Un ping rate ne condamne pas la tache : le sondage prend le relais.
+      }
 
       // 3. Suivi.
       const detail = await pollTask({
         apiKey,
         taskId,
-        onTick: (d, elapsed) =>
-          setRender({ message: `Etat : ${d.state} (${Math.round(elapsed / 1000)}s)`, elapsed }),
+        onTick: (d, elapsed) => {
+          setRender({ message: '', elapsed, state: d.state, progress: d.progress });
+          set((st) => ({
+            taskPing: { ...(st.taskPing || {}), state: d.state, progress: d.progress, checking: false },
+          }));
+        },
       });
-      setRender({ status: 'done', message: 'Rendu termine.', urls: detail.urls });
+      setRender({
+        status: 'done',
+        message: '',
+        urls: detail.urls,
+        credits: detail.creditsConsumed,
+        costTime: detail.costTime,
+      });
     } catch (err) {
       setRender({ status: 'error', message: err.message });
     }
   },
 
-  resetRender: () => set({ render: { status: 'idle', message: '', taskId: null, urls: [], elapsed: 0 } }),
+  /**
+   * Interroge un identifiant de tache. Sert a deux choses reelles : verifier
+   * qu'un rendu tourne, et reprendre le suivi apres une expiration ou un onglet
+   * ferme — jusqu'ici une impasse apres un rendu paye.
+   */
+  checkTask: async (taskId) => {
+    const { apiKey } = get();
+    const id = String(taskId || '').trim();
+    if (!id) return;
+    if (!apiKey?.trim()) {
+      set({ taskPing: { taskId: id, checking: false, error: 'render.block.key' } });
+      return;
+    }
+
+    set({ taskPing: { taskId: id, checking: true, error: null } });
+    try {
+      const d = await getTaskDetail({ apiKey, taskId: id });
+      set({
+        taskPing: {
+          taskId: id,
+          state: d.state,
+          progress: d.progress,
+          credits: d.creditsConsumed,
+          costTime: d.costTime,
+          createTime: d.createTime,
+          model: d.model,
+          urls: d.urls,
+          accepted: true,
+          checking: false,
+          error: null,
+        },
+      });
+
+      // Une tache deja terminee : on recupere son resultat plutot que de le
+      // laisser dans un message.
+      if (isSuccess(d.state) && d.urls.length) {
+        set({
+          render: {
+            status: 'done',
+            message: '',
+            taskId: id,
+            urls: d.urls,
+            elapsed: d.costTime || 0,
+            credits: d.creditsConsumed,
+          },
+        });
+      } else if (isFailure(d.state)) {
+        set((st) => ({
+          render: { ...st.render, status: 'error', taskId: id, message: d.failMsg || `${d.failCode || 'fail'}` },
+        }));
+      }
+    } catch (err) {
+      set({ taskPing: { taskId: id, checking: false, error: err.message } });
+    }
+  },
+
+  /** Reprend le suivi d'une tache encore en cours. */
+  resumeTask: async (taskId) => {
+    const { apiKey } = get();
+    const id = String(taskId || '').trim();
+    if (!id || !apiKey?.trim()) return;
+    const setRender = (patch) => set((st) => ({ render: { ...st.render, ...patch } }));
+    setRender({ status: 'polling', taskId: id, message: '', urls: [] });
+    try {
+      const detail = await pollTask({
+        apiKey,
+        taskId: id,
+        onTick: (d, elapsed) => {
+          setRender({ elapsed, state: d.state, progress: d.progress });
+          set((st) => ({ taskPing: { ...(st.taskPing || {}), state: d.state, progress: d.progress } }));
+        },
+      });
+      setRender({ status: 'done', urls: detail.urls, credits: detail.creditsConsumed });
+    } catch (err) {
+      setRender({ status: 'error', message: err.message });
+    }
+  },
+
+  dismissTaskPing: () => set({ taskPing: null }),
+
+  resetRender: () => set({ taskPing: null, render: { status: 'idle', message: '', taskId: null, urls: [], elapsed: 0 } }),
 
   undoCorrection: () => {
     const { scene, correction } = get();

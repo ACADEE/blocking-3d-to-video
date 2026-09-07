@@ -121,9 +121,24 @@ export async function createSeedanceTask({ apiKey, payload, signal }) {
   return taskId;
 }
 
+// Etats documentes par l'API. On les nomme plutot que de deviner la phase en
+// cherchant des sous-chaines dans un message, ce qui cassait au moindre
+// changement de formulation cote kie.ai.
+export const TASK_STATES = ['waiting', 'queuing', 'generating', 'success', 'fail'];
+const TERMINAL_OK = new Set(['success', 'succeeded']);
+const TERMINAL_FAIL = new Set(['fail', 'failed', 'error']);
+
+export const isTerminal = (state) => TERMINAL_OK.has(state) || TERMINAL_FAIL.has(state);
+export const isSuccess = (state) => TERMINAL_OK.has(state);
+export const isFailure = (state) => TERMINAL_FAIL.has(state);
+
 /**
- * Etat d'une tache. `resultJson` est une chaine JSON : on la deplie ici pour que
- * l'appelant n'ait pas a connaitre ce detail de l'API.
+ * Etat d'une tache.
+ *
+ * `resultJson` est une chaine JSON : on la deplie ici pour que l'appelant
+ * n'ait pas a connaitre ce detail de l'API. On remonte aussi les champs que
+ * la documentation expose et qui renseignent l'attente — avancement, credits
+ * consommes, temps de calcul — plutot que le seul etat.
  */
 export async function getTaskDetail({ apiKey, taskId, signal }) {
   const json = await kieJson(`/api/v1/jobs/recordInfo?taskId=${encodeURIComponent(taskId)}`, {
@@ -131,6 +146,7 @@ export async function getTaskDetail({ apiKey, taskId, signal }) {
     signal,
   });
   const data = json?.data || {};
+
   let result = null;
   if (data.resultJson) {
     try {
@@ -140,36 +156,70 @@ export async function getTaskDetail({ apiKey, taskId, signal }) {
     }
   }
   const urls = result?.resultUrls || result?.result_urls || [];
+
   return {
-    state: data.state || data.status || 'unknown',
-    failCode: data.failCode ?? null,
-    failMsg: data.failMsg ?? null,
+    taskId: data.taskId || taskId,
+    model: data.model || null,
+    state: String(data.state || data.status || 'unknown').toLowerCase(),
+    // 0-100, renseigne par certains modeles seulement : `null` veut dire
+    // "inconnu", ce qui n'est pas la meme chose que zero.
+    progress: Number.isFinite(Number(data.progress)) ? Number(data.progress) : null,
+    creditsConsumed: Number.isFinite(Number(data.creditsConsumed)) ? Number(data.creditsConsumed) : null,
+    costTime: Number.isFinite(Number(data.costTime)) ? Number(data.costTime) : null,
+    createTime: data.createTime || null,
+    completeTime: data.completeTime || null,
+    failCode: data.failCode || null,
+    failMsg: data.failMsg || null,
     urls: Array.isArray(urls) ? urls : [urls].filter(Boolean),
     raw: json,
   };
 }
 
 /**
- * Interroge jusqu'a l'etat terminal. Intervalle volontairement large : un rendu
- * Seedance se compte en minutes, pas en secondes.
+ * Cadence de sondage.
+ *
+ * La documentation recommande un depart a 2-3 s puis une croissance
+ * progressive : un rendu long ne merite pas une requete toutes les six
+ * secondes, un rendu court ne merite pas d'attendre six secondes pour rien.
  */
-export async function pollTask({ apiKey, taskId, onTick, intervalMs = 6000, timeoutMs = 20 * 60 * 1000, shouldStop }) {
+export function pollDelay(attempt, { start = 3000, max = 15000, factor = 1.35 } = {}) {
+  return Math.min(max, Math.round(start * factor ** attempt));
+}
+
+/**
+ * Interroge jusqu'a l'etat terminal.
+ *
+ * Delai d'abandon a 15 minutes, comme le recommande la documentation. Passe ce
+ * point la tache continue peut-etre cote kie.ai : le taskId reste exploitable
+ * pour reprendre le suivi.
+ */
+export async function pollTask({
+  apiKey,
+  taskId,
+  onTick,
+  timeoutMs = 15 * 60 * 1000,
+  shouldStop,
+}) {
   const startedAt = Date.now();
-  for (;;) {
+  for (let attempt = 0; ; attempt += 1) {
     if (shouldStop && shouldStop()) throw new KieError('Suivi interrompu.');
+
     const detail = await getTaskDetail({ apiKey, taskId });
     if (onTick) onTick(detail, Date.now() - startedAt);
 
-    const state = String(detail.state).toLowerCase();
-    if (state === 'success' || state === 'succeeded') return detail;
-    if (state === 'fail' || state === 'failed' || state === 'error') {
-      throw new KieError(`Rendu echoue (${detail.failCode ?? '?'}) : ${detail.failMsg || 'sans detail'}`, {
-        body: detail.raw,
-      });
+    if (isSuccess(detail.state)) return detail;
+    if (isFailure(detail.state)) {
+      throw new KieError(
+        `Rendu echoue (${detail.failCode ?? '?'}) : ${detail.failMsg || 'sans detail'}`,
+        { body: detail.raw }
+      );
     }
     if (Date.now() - startedAt > timeoutMs) {
-      throw new KieError("Delai depasse. La tache continue peut-etre : conserve le taskId pour la reinterroger.");
+      throw new KieError(
+        "Delai depasse. La tache continue peut-etre cote kie.ai : reprends le suivi avec son identifiant.",
+        { body: { taskId } }
+      );
     }
-    await new Promise((r) => setTimeout(r, intervalMs));
+    await new Promise((r) => setTimeout(r, pollDelay(attempt)));
   }
 }

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useStore } from '../store/useStore.js';
 import { useT } from '../i18n/index.js';
+import Spinner from './Spinner.jsx';
 import { inferType, inferActorType, propBounds, PROXY_BOUNDS, TYPE_LABELS } from '../proxies/registry.js';
 
 // Modelisation 3D par GPT-6 Astra.
@@ -67,38 +68,43 @@ export default function ModelPanel() {
               : propBounds(prop);
             return (
               <p className="mb-2 font-mono text-[11px] text-white/55">
-                gabarit impose {b.width.toFixed(2)} x {b.height.toFixed(2)} x {b.depth.toFixed(2)} m
+                {t('model.bounds', { w: b.width.toFixed(2), h: b.height.toFixed(2), d: b.depth.toFixed(2) })}
               </p>
             );
           })()}
 
           <div className="space-y-1.5">
-            {TARGETS.map((t) => {
-              const has = Boolean(scene.models?.[entity.id]?.[t.id]);
-              const busy = modeling === `${entity.id}:${t.id}`;
+            {TARGETS.map((target) => {
+              const has = Boolean(scene.models?.[entity.id]?.[target.id]);
+              const busy = modeling === `${entity.id}:${target.id}`;
               return (
-                <div key={t.id} className="flex items-center gap-1.5">
+                <div key={target.id} className="flex items-center gap-1.5">
                   <button
                     type="button"
-                    onClick={() => generateModel(entity.id, t.id)}
+                    onClick={() => generateModel(entity.id, target.id)}
                     disabled={busy || !apiKey}
-                    title={t.hint}
+                    title={t(target.hint)}
                     className={`flex-1 rounded border px-2 py-1.5 text-left transition disabled:cursor-not-allowed disabled:opacity-40 ${
                       has
                         ? 'border-ok/40 bg-ok/10 text-ok'
                         : 'border-ink-500 bg-ink-700 text-white/80 hover:border-signal/40 hover:text-white'
                     }`}
                   >
-                    <span className="block font-mono text-[11px] uppercase tracking-[0.14em]">
-                      {busy ? 'Modelisation...' : has ? `${t.label} — regenerer` : `Modeliser : ${t.label}`}
+                    <span className="flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.14em]">
+                      {busy && <Spinner />}
+                      {busy
+                        ? t('model.working')
+                        : has
+                          ? t('model.regenerate', { target: t(target.label) })
+                          : t('model.make', { target: t(target.label) })}
                     </span>
-                    <span className="mt-0.5 block text-[11px] leading-snug opacity-60">{t.hint}</span>
+                    <span className="mt-0.5 block text-[11px] leading-snug opacity-60">{t(target.hint)}</span>
                   </button>
                   {has && (
                     <button
                       type="button"
-                      onClick={() => clearModel(entity.id, t.id)}
-                      title="Revenir au proxy generique"
+                      onClick={() => clearModel(entity.id, target.id)}
+                      title={t('action.reset')}
                       className="shrink-0 rounded border border-ink-500 bg-ink-700 px-2 py-2 font-mono text-[11px] text-white/70 transition hover:text-alert"
                     >
                       x
@@ -111,7 +117,7 @@ export default function ModelPanel() {
 
           {!apiKey && (
             <p className="mt-2 font-mono text-[11px] leading-relaxed text-white/55">
-              Une cle kie.ai est requise : la geometrie est ecrite par gpt-6-astra.
+              {t('model.needKey')}
             </p>
           )}
         </>

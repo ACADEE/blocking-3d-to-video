@@ -11,7 +11,7 @@ your staging* instead of inventing its own.
 [![Vite](https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white)](https://vitejs.dev)
 [![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)](https://react.dev)
 [![three.js](https://img.shields.io/badge/three.js-r170-000000?logo=threedotjs&logoColor=white)](https://threejs.org)
-[![Tests](https://img.shields.io/badge/tests-87%20passing-38d17a)](#testing)
+[![Tests](https://img.shields.io/badge/tests-100%20passing-38d17a)](#testing)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 [Quick start](#quick-start) · [How it works](#how-it-works) · [The three steps](#the-three-steps) · [Editing](#editing-the-blocking) · [Exports](#exports) · [Architecture](#architecture)
@@ -53,7 +53,7 @@ auto-correction and the full editing toolset immediately.
 | `npm run dev` | Dev server with the kie.ai proxy (avoids CORS) |
 | `npm run build` | Production build into `dist/` |
 | `npm run preview` | Serve the production build |
-| `npm test` | 87 tests on the geometry engine, exports and i18n |
+| `npm test` | 100 tests on the geometry engine, exports, task tracking and i18n |
 | `npm run test:watch` | Same, in watch mode |
 
 **Requirements:** Node 18+, and a Chromium-based browser for the video capture step
@@ -256,6 +256,20 @@ sizes its canvas from the *measured* container, so scaling the preview with a CS
 shrink the buffer with it; the preview is shown at its real reduced size and `devicePixelRatio`
 compensates, landing the buffer on 1280×720 exactly.
 
+### Tracking a render
+
+A render takes minutes, so the app tells you where it is rather than leaving you
+staring at a label. The moment kie.ai accepts the task, a first call to
+`GET /api/v1/jobs/recordInfo` confirms it and reports the task's state, model and
+creation time. Polling then follows the documented practice — 3 s to start,
+easing out to 15 s, giving up at 15 minutes — and surfaces `progress` when the
+model provides it, an indeterminate bar when it does not. Guessing a percentage
+nobody knows would be a lie.
+
+Paste any `taskId` into **Task tracking** to query it. That covers the case the
+roadmap used to call a dead end: a closed tab or an expired wait no longer loses
+a render you paid for — the result is picked back up from its identifier.
+
 **On hosting the clips.** Seedance downloads its references from its own servers, so a `blob:` URL
 from your browser is useless to it. The app tries kie.ai's file service, but that service is
 separate from the generation API and may not be reachable from a browser (CORS). If the upload
@@ -289,7 +303,7 @@ the middle of the passage. Every fix is surfaced as a warning.
 
 ### Testing
 
-87 tests, run serially so the suite never lies about its own scope:
+100 tests, run serially so the suite never lies about its own scope:
 
 ```bash
 npm test
@@ -324,7 +338,6 @@ to the model always stay in English — they address a machine, not a reader.
 
 ## Roadmap
 
-- [ ] Resume a render from its `taskId` after a timeout
 - [ ] Session persistence — a refresh currently loses the scene, clips and render
 - [ ] Bézier handles on path points, on top of the current draggable waypoints
 - [ ] Multi-shot sequences

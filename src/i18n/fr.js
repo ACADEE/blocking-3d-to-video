@@ -303,6 +303,27 @@ export default {
     "Ce navigateur enregistre en {ext}. Seedance n'accepte que mp4 ou mov : convertis les clips, ou passe sur Chrome / Edge.",
   'capture.noCanvas': 'Canvas de capture introuvable.',
 
+  // --- Suivi de tache ----------------------------------------------------
+  'task.title': 'Suivi de tache',
+  'task.check': 'Verifier une tache',
+  'task.checkHint': 'Colle un identifiant pour savoir si la tache tourne encore, et recuperer son resultat.',
+  'task.placeholder': 'identifiant de tache',
+  'task.checking': 'Interrogation de kie.ai...',
+  'task.accepted': 'kie.ai a bien pris la tache.',
+  'task.state': 'Etat',
+  'task.progress': 'Avancement',
+  'task.credits': 'Credits',
+  'task.model': 'Modele',
+  'task.created': 'Creee',
+  'task.resume': 'Reprendre le suivi',
+  'task.notFound': 'Aucune tache sous cet identifiant.',
+  'task.state.waiting': 'en file',
+  'task.state.queuing': "dans la file d'attente",
+  'task.state.generating': 'en cours de generation',
+  'task.state.success': 'terminee',
+  'task.state.fail': 'echouee',
+  'task.state.unknown': 'inconnu',
+
   // --- Erreurs -----------------------------------------------------------
   'error.import': 'Import impossible : {message}',
   'error.describe': 'Decris la scene avant de generer.',

@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { useStore } from '../store/useStore.js';
 import { useT } from '../i18n/index.js';
+import Spinner from './Spinner.jsx';
 import { isUsableAssetUrl } from '../api/upload.js';
 
 // Image de reference attachee a un element.
@@ -67,6 +68,7 @@ export default function RefImage({ entityId, entityName }) {
               disabled={busy}
               className="btn-ghost flex-1"
             >
+              {busy && <Spinner />}
               {busy ? t('inspector.reference.uploading') : t('inspector.reference.add')}
             </button>
             <button

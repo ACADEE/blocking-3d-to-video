@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useThree } from '@react-three/fiber';
+
 import { Line, TransformControls } from '@react-three/drei';
 import { Vector3 } from 'three';
 import { useStore } from '../store/useStore.js';
@@ -26,10 +26,10 @@ function EntityGizmo({ kind, id, position, rotation, mode, onCommit }) {
   useEffect(() => {
     const c = controls.current;
     if (!c) return undefined;
-    // Sans ca, OrbitControls et le gizmo se disputent le pointeur.
+    // On ne valide qu'au relachement : recalculer la scene a chaque image du
+    // glisse reconstruirait le graphe de portes et tous les itineraires.
+    // La mise en pause de l'orbite pendant le glisse est deja assuree par drei.
     const onDragging = (e) => {
-      const orbit = c.__orbit;
-      if (orbit) orbit.enabled = !e.value;
       if (!e.value && ref.current) {
         onCommit(ref.current.position.toArray(), ref.current.rotation.y);
       }
@@ -173,12 +173,6 @@ export default function SceneEditing() {
   const insertActorWaypoint = useStore((s) => s.insertActorWaypoint);
   const removeActorWaypoint = useStore((s) => s.removeActorWaypoint);
   const [pointIndex, setPointIndex] = useState(null);
-  const { controls } = useThree();
-
-  // Le gizmo doit pouvoir couper OrbitControls pendant un glisse.
-  useEffect(() => {
-    if (controls) TransformControls.prototype.__orbit = controls;
-  }, [controls]);
 
   useEffect(() => setPointIndex(null), [selection?.id]);
 

@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from '../store/useStore.js';
 import { useT } from '../i18n/index.js';
+import Spinner from './Spinner.jsx';
+import TaskTracker from './TaskTracker.jsx';
 import { pickVideoMime, CAPTURE_SIZES } from '../export/recorder.js';
 import { RESOLUTIONS } from '../api/seedance.js';
 import { isUsableAssetUrl } from '../api/upload.js';
@@ -51,14 +53,22 @@ function XIcon() {
   );
 }
 
-/** Traduit l'etat brut de l'API en phase lisible. Jamais l'enum a l'ecran. */
+/**
+ * Phase lisible, derivee de l'etat documente par l'API.
+ *
+ * On lisait auparavant des sous-chaines dans un message de service, ce qui
+ * cassait a la moindre reformulation cote kie.ai.
+ */
+const PHASE_BY_STATE = {
+  waiting: 'render.phase.queued',
+  queuing: 'render.phase.queued',
+  generating: 'render.phase.generating',
+};
+
 function phaseKey(render) {
   if (render.status === 'uploading') return 'render.phase.uploading';
   if (render.status === 'submitting') return 'render.phase.submitting';
-  const raw = String(render.message || '').toLowerCase();
-  if (raw.includes('queue') || raw.includes('wait')) return 'render.phase.queued';
-  if (raw.includes('generat')) return 'render.phase.generating';
-  return 'render.phase.polling';
+  return PHASE_BY_STATE[render.state] || 'render.phase.polling';
 }
 
 export default function RenderScreen() {
@@ -367,6 +377,9 @@ export default function RenderScreen() {
               <h2 className="font-mono text-[11px] uppercase tracking-[0.2em] text-signal">
                 {t('render.wait.title')}
               </h2>
+              {render.progress != null && (
+                <span className="font-mono text-[11px] tabular-nums text-signal">{render.progress} %</span>
+              )}
               <span className="ml-auto font-mono text-[11px] tabular-nums text-white/70">
                 {t('render.wait.elapsed', {
                   n: `${Math.floor(render.elapsed / 60000)}:${String(
@@ -379,7 +392,14 @@ export default function RenderScreen() {
             {/* Barre indeterminee : la duree reelle est inconnue, la feindre
                 serait mentir. Elle dit "ca travaille", pas "on en est la". */}
             <div className="mb-2.5 h-1 overflow-hidden rounded bg-ink-600">
-              <div className="indeterminate h-full w-1/3 rounded bg-signal" />
+              {render.progress != null ? (
+                <div
+                  className="h-full rounded bg-signal transition-[width] duration-500"
+                  style={{ width: `${Math.min(100, Math.max(0, render.progress))}%` }}
+                />
+              ) : (
+                <div className="indeterminate h-full w-1/3 rounded bg-signal" />
+              )}
             </div>
 
             <p className="text-[12px] leading-relaxed text-white/80">{t(phaseKey(render))}</p>
@@ -391,6 +411,8 @@ export default function RenderScreen() {
             )}
           </section>
         )}
+
+        <TaskTracker />
 
         {/* --- 4. Prompt, en lecture seule -------------------------------- */}
         <Section
@@ -555,6 +577,7 @@ export default function RenderScreen() {
               onClick={submitRender}
               className="btn-primary"
             >
+              {busy && <Spinner className="h-4 w-4" />}
               {busy ? t('render.sending') : t('render.send')}
             </button>
           </div>

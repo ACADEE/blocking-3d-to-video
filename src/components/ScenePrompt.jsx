@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore.js';
 import { useT } from '../i18n/index.js';
+import Spinner from './Spinner.jsx';
 
 // Ajout d'elements a la scene en langage courant.
 //
@@ -54,7 +55,7 @@ export default function ScenePrompt() {
           className="field min-w-0 flex-1 text-[12px]"
         />
         <button type="submit" disabled={editing || !value.trim() || !apiKey} className="btn-ghost px-2.5">
-          {editing ? '…' : t('scenePrompt.send')}
+          {editing ? <Spinner /> : t('scenePrompt.send')}
         </button>
       </div>
 
@@ -63,7 +64,10 @@ export default function ScenePrompt() {
       )}
 
       {editing && (
-        <p className="mt-1.5 font-mono text-[11px] text-signal">{t('scenePrompt.working')}</p>
+        <p className="mt-1.5 flex items-center gap-1.5 font-mono text-[11px] text-signal">
+          <Spinner />
+          {t('scenePrompt.working')}
+        </p>
       )}
 
       {summary && (

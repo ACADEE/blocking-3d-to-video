@@ -295,6 +295,27 @@ export default {
     'This browser records in {ext}. Seedance only accepts mp4 or mov: convert the clips, or switch to Chrome / Edge.',
   'capture.noCanvas': 'Capture canvas not found.',
 
+  // --- Suivi de tache ----------------------------------------------------
+  'task.title': 'Task tracking',
+  'task.check': 'Check a task',
+  'task.checkHint': 'Paste a taskId to see whether it is still running, and pick its result back up.',
+  'task.placeholder': 'task id',
+  'task.checking': 'Querying kie.ai...',
+  'task.accepted': 'kie.ai accepted the task.',
+  'task.state': 'State',
+  'task.progress': 'Progress',
+  'task.credits': 'Credits',
+  'task.model': 'Model',
+  'task.created': 'Created',
+  'task.resume': 'Resume tracking',
+  'task.notFound': 'No task under this identifier.',
+  'task.state.waiting': 'queued',
+  'task.state.queuing': 'in the queue',
+  'task.state.generating': 'generating',
+  'task.state.success': 'finished',
+  'task.state.fail': 'failed',
+  'task.state.unknown': 'unknown',
+
   // --- Errors ------------------------------------------------------------
   'error.import': 'Import failed: {message}',
   'error.describe': 'Describe the scene before generating.',
