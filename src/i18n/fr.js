@@ -1,0 +1,310 @@
+// Francais. Les accents reviennent : ce sont des donnees, plus du code.
+// Toute cle absente ici retombe sur l'anglais et se signale a la console.
+
+export default {
+  // --- Global ------------------------------------------------------------
+  'app.name': 'BLOCKING',
+  'app.tagline':
+    "Une description de scene devient un blocking 3D jouable, puis un prompt de tournage, puis un plan photorealiste rendu par Seedance 2.5. Trois etapes, un seul fil.",
+  'action.close': 'Fermer',
+  'action.cancel': 'Annuler',
+  'action.retry': 'Reessayer',
+  'action.copy': 'Copier',
+  'action.copied': 'Copie',
+  'action.download': 'Telecharger',
+  'action.import': 'Importer',
+  'action.export': 'Exporter',
+  'action.reset': 'Reinitialiser',
+  'action.delete': 'Supprimer',
+  'action.undo': 'Annuler',
+  'action.advanced': 'Avance',
+  'action.home': 'Accueil',
+  'action.start': 'Commencer',
+
+  // --- Pipeline ----------------------------------------------------------
+  'pipeline.nav': 'Etapes du pipeline',
+  'pipeline.step': 'Etape {n} sur {total} : {label}',
+  'pipeline.blocking': 'Blocking',
+  'pipeline.prompt': 'Prompt',
+  'pipeline.render': 'Rendu',
+  'pipeline.blocking.hint': '{actors} acteur(s), {zones} zone(s)',
+  'pipeline.prompt.hint.generated': 'genere depuis le blocking',
+  'pipeline.prompt.hint.edited': 'modifie a la main',
+  'pipeline.render.hint.ready': '{count} passe(s) prete(s)',
+  'pipeline.render.hint.blocked': 'Il manque : {what}',
+  'pipeline.render.missing.passes': '{n} passe(s) a enregistrer',
+  'pipeline.render.missing.key': 'cle kie.ai',
+
+  // --- Header ------------------------------------------------------------
+  'header.home.title': "Revenir a l'accueil",
+  'header.project': 'Nom du projet',
+  'header.rendering': 'Rendu en cours',
+  'header.contacts': '{n} contact(s)',
+  'header.clear': 'trajectoire libre',
+  'header.status.idle': 'Cle non testee',
+  'header.status.testing': 'Test de connexion',
+  'header.status.ok': 'Connecte',
+  'header.status.error': 'Connexion en echec',
+  'header.leave.confirm': "Revenir a l'accueil ? Tu vas perdre {what}.",
+  'header.leave.dirty': 'des modifications non exportees',
+  'header.leave.clips': 'les passes enregistrees',
+  'header.leave.render': 'un rendu en cours',
+  'header.language': 'Langue',
+
+  // --- Accueil -----------------------------------------------------------
+  'home.what.title': "Ce que fait l'application",
+  'home.what.body':
+    "Tu decris une scene en langage courant. GPT-6 Astra la transforme en SceneGraph structure. L'application construit le decor, y fait marcher les personnages sur des trajectoires continues, resout le rig camera, et detecte ou la camera heurte les murs.",
+  'home.step1.title': 'Poser le blocking 3D',
+  'home.step1.body':
+    'Pieces, passages, trajectoires et parcours camera — calcules, lisibles image par image, et editables a la main.',
+  'home.step2.title': 'Ecrire le prompt',
+  'home.step2.body':
+    'Timecodes de franchissement, focale, rig et vitesses de marche viennent du calcul, pas d’une estimation.',
+  'home.step3.title': 'Rendre le plan',
+  'home.step3.body':
+    'Deux passes de blocking sont enregistrees et envoyees a Seedance 2.5 en reference. Il suit la mise en place ; tu recuperes la photographie.',
+  'home.brief.label': 'Description de la scene',
+  'home.brief.placeholder':
+    'Une femme entre dans un restaurant, traverse la salle et entre en cuisine. La camera la suit a deux metres en 35mm steadicam, plan-sequence.',
+  'home.duration': 'Duree',
+  'home.fps': 'Images / s',
+  'home.aspect': 'Format',
+  'home.generate': 'Generer le blocking',
+  'home.generating': 'Construction du SceneGraph...',
+  'home.resume': 'Reprendre la scene',
+  'home.needKey':
+    "Il te faut une cle {link} pour generer — ou charge une scene d'exemple ci-dessous, sans cle.",
+  'home.samples': "Scenes d'exemple — aucun appel API, aucun credit",
+  'home.import': 'ou importer un SceneGraph .json',
+  'home.sample.restaurant': 'Restaurant',
+  'home.sample.restaurant.detail':
+    'Le SceneGraph exact renvoye par gpt-6-astra dans la reponse de reference. Trajectoire libre.',
+  'home.sample.apartment': 'Appartement en L',
+  'home.sample.apartment.detail':
+    'Couloir etroit, virage serre : la camera coupe le virage et accroche un encadrement.',
+  'home.sample.street': 'Rue',
+  'home.sample.street.detail':
+    'Exterieur. Voiture, camion, arbre, lampadaire — verifie les silhouettes des proxys.',
+
+  // --- Cle API -----------------------------------------------------------
+  'key.title': 'Cle API kie.ai',
+  'key.why':
+    "Cette application genere ses scenes avec GPT-6 Astra, accessible uniquement via kie.ai. Une cle OpenAI ou Anthropic ne fonctionnera pas ici.",
+  'key.create': 'Creer ma cle sur kie.ai',
+  'key.how':
+    "Cree un compte, ouvre API Key dans le tableau de bord, genere une cle et colle-la ci-dessous. Le credit est prepaye : une generation de scene coute environ 0,9 credit.",
+  'key.test': 'Tester',
+  'key.testing': 'Test...',
+  'key.clear': 'Effacer',
+  'key.show': 'Afficher',
+  'key.hide': 'Masquer',
+  'key.storage': "La cle reste dans ce navigateur et n'est envoyee qu'a api.kie.ai.",
+  'key.technical': 'Details techniques',
+  'key.model': 'Modele',
+  'key.endpoint': 'Endpoint',
+  'key.effort': 'Effort',
+  'key.cors':
+    'En developpement la requete transite par le proxy Vite, ce qui evite tout blocage CORS.',
+
+  // --- Viewport ----------------------------------------------------------
+  'view.mode': 'Mode de vue',
+  'view.camera': 'Camera',
+  'view.camera.hint': "A travers l'objectif de la scene",
+  'view.top': 'Dessus',
+  'view.top.hint': 'Plan de masse vu de dessus',
+  'view.orbit': 'Orbite',
+  'view.orbit.hint': 'Inspection libre du blocking',
+  'edit.tool': "Outil d'edition",
+  'edit.select': 'Selection',
+  'edit.move': 'Deplacer',
+  'edit.rotate': 'Tourner',
+  'edit.select.hint': 'Clique un element pour le selectionner',
+  'edit.move.hint': 'Tire les fleches pour deplacer',
+  'edit.rotate.hint': "Tire l'anneau pour tourner",
+  'edit.nothing': "Selectionne un element dans le viewport ou l'inspecteur.",
+  'edit.path.detach': 'Editer la trajectoire',
+  'edit.path.reset': 'Revenir au trajet calcule',
+  'edit.path.hint':
+    'Tire une poignee pour la deplacer. Clique la ligne pour inserer un point. Suppr en retire un.',
+  'edit.path.points': '{n} points',
+  'edit.path.authored': 'Trajectoire editee a la main',
+  'edit.camera.key': 'Poser une cle camera ici',
+  'edit.camera.keyHint': 'Enregistre la position de la camera a {time}',
+  'edit.camera.keys': '{n} cles camera',
+  'edit.camera.clear': 'Effacer les cles camera',
+  'edit.camera.needView': 'Passe en vue Dessus ou Orbite pour deplacer la camera.',
+
+  // --- Prompt de scene ---------------------------------------------------
+  'scenePrompt.label': 'Ajouter a la scene',
+  'scenePrompt.placeholder': 'ajoute une voiture rouge pres de l’entree',
+  'scenePrompt.send': 'Ajouter',
+  'scenePrompt.working': 'Mise a jour de la scene...',
+  'scenePrompt.needKey': 'Une cle kie.ai est requise pour editer la scene par prompt.',
+  'scenePrompt.applied': 'Scene mise a jour : {summary}',
+  'scenePrompt.nothing': "Le modele n'a renvoye aucun changement.",
+  'scenePrompt.added': '{n} ajoute(s)',
+  'scenePrompt.updated': '{n} modifie(s)',
+  'scenePrompt.removed': '{n} supprime(s)',
+
+  // --- Inspecteur --------------------------------------------------------
+  'inspector.camera': 'Camera',
+  'inspector.rig': 'Rig',
+  'inspector.lens': 'Focale',
+  'inspector.height': 'Hauteur',
+  'inspector.distance': 'Distance au sujet',
+  'inspector.target': 'Cible',
+  'inspector.take': 'Prise',
+  'inspector.duration': 'Duree',
+  'inspector.fps': 'Images/s',
+  'inspector.aspect': 'Format',
+  'inspector.actors': 'Acteurs ({n})',
+  'inspector.props': 'Objets ({n})',
+  'inspector.zones': 'Zones ({n})',
+  'inspector.warnings': 'Avertissements ({n})',
+  'inspector.advanced': 'Avance',
+  'inspector.raw.show': 'afficher la reponse brute du modele',
+  'inspector.raw.hide': 'masquer la reponse brute du modele',
+  'inspector.doorways': '{n} passage(s) : {names}',
+  'inspector.doorways.none': 'aucun passage',
+  'inspector.keysActive':
+    'Trajectoire imposee active ({n} cles). Modifier un reglage ci-dessus la reinitialise.',
+  'inspector.reference': 'Image de reference',
+  'inspector.reference.add': 'Ajouter une image de reference',
+  'inspector.reference.replace': 'Remplacer',
+  'inspector.reference.remove': 'Retirer',
+  'inspector.reference.hint':
+    'Envoyee a Seedance et nommee dans le prompt, pour qu’il sache que cette image est cet element.',
+  'inspector.reference.url': 'URL publique',
+  'inspector.reference.uploading': 'Mise en ligne...',
+
+  // --- Modelisation IA ---------------------------------------------------
+  'model.title': 'Modelisation IA',
+  'model.count': '{n} modele(s)',
+  'model.pick':
+    "Selectionne un acteur ou un objet pour que gpt-6-astra en ecrive la geometrie, a la place du proxy generique.",
+  'model.bounds': 'gabarit impose {w} x {h} x {d} m',
+  'model.browser': 'Navigateur',
+  'model.browser.hint': 'Geometrie three.js, rendue tout de suite',
+  'model.blender': 'Blender',
+  'model.blender.hint': "Fonction Python injectee dans l'export",
+  'model.make': 'Modeliser : {target}',
+  'model.regenerate': '{target} — regenerer',
+  'model.working': 'Modelisation...',
+  'model.needKey': 'Une cle kie.ai est requise : la geometrie est ecrite par gpt-6-astra.',
+
+  // --- Timeline ----------------------------------------------------------
+  'timeline.timecode': 'Timecode',
+  'timeline.camera': 'Camera',
+  'timeline.alerts': 'Alertes',
+  'timeline.play': 'Lecture / Pause (Espace)',
+  'timeline.prev': 'Image precedente (Fleche gauche)',
+  'timeline.next': 'Image suivante (Fleche droite)',
+  'timeline.start': 'Retour au debut (Origine)',
+  'timeline.loop': 'Boucle',
+  'timeline.frame': 'image {n} / {total}',
+
+  // --- Export ------------------------------------------------------------
+  'export.json': 'SceneGraph .json',
+  'export.json.hint': "Le graphe brut, re-importable dans l'app.",
+  'export.blender': 'Script Blender .py',
+  'export.blender.hint': 'Decor, acteurs et camera animes image par image.',
+  'export.blender.usage':
+    "Blender > onglet Scripting > New > coller > Run Script. Tout est cree dans une collection BLOCKING_3D ; la scene existante n'est pas touchee.",
+
+  // --- Ecran prompt ------------------------------------------------------
+  'prompt.title': 'Le prompt de tournage',
+  'prompt.body':
+    "Ecrit en anglais depuis le blocking resolu : les timecodes de franchissement, la focale, le rig et les vitesses de marche viennent du calcul, pas d'une estimation.",
+  'prompt.stat.duration': 'Duree',
+  'prompt.stat.lens': 'Objectif',
+  'prompt.stat.beats': 'Beats',
+  'prompt.stat.beats.value': '{n} piece(s) traversee(s)',
+  'prompt.stat.passes': 'Passes jointes',
+  'prompt.stat.passes.none': 'aucune',
+  'prompt.withPasses':
+    "Le prompt contient la consigne qui interdit a Seedance de reproduire l'aspect proxy gris des passes jointes. Elle n'apparait que parce que des passes sont enregistrees.",
+  'prompt.withoutPasses':
+    "Aucune passe de blocking n'est encore enregistree. Une fois enregistrees a l'etape 3, le prompt gagnera la consigne qui empeche Seedance de copier l'aspect des proxys au lieu de suivre leur mise en place.",
+  'prompt.label.generated': 'Prompt (genere)',
+  'prompt.label.edited': 'Prompt (modifie a la main)',
+  'prompt.regenerate': 'revenir au prompt genere',
+  'prompt.chars': '{n} / 30 000 caracteres',
+  'prompt.toRender': 'Passer au rendu',
+
+  // --- Ecran rendu -------------------------------------------------------
+  'render.title': 'Le rendu cinematique',
+  'render.body':
+    'Les deux passes de blocking partent avec le prompt comme references. Seedance suit la mise en place et le mouvement camera, et se charge de la photographie.',
+  'render.result': 'Plan rendu',
+  'render.result.elapsed': '{n} s de rendu',
+  'render.result.download': 'Telecharger le plan',
+  'render.result.open': 'Ouvrir',
+  'render.result.again': 'Ajuster le prompt et relancer',
+  'render.passes': 'Passes de reference',
+  'render.passes.record': 'Enregistrer les 2 passes',
+  'render.passes.rerecord': 'Reenregistrer',
+  'render.passes.size': 'capture {k} — {label}',
+  'render.pass.iso': 'Passe isometrique',
+  'render.pass.iso.hint': 'Le decor vu de dessus, les trajectoires et le parcours camera.',
+  'render.pass.cam': 'Passe camera',
+  'render.pass.cam.hint': "Exactement ce que voit l'objectif, image par image.",
+  'render.pass.empty': 'Pas encore enregistree',
+  'render.playAll': 'Tout lire',
+  'render.playAll.hint': 'Demarre tous les lecteurs depuis le debut, ensemble',
+  'render.why':
+    "Enregistre d'abord les deux passes. Sans elles Seedance n'a ni la mise en place ni le mouvement camera, et le prompt perd la consigne qui l'empeche de copier l'aspect des proxys. C'est ce qui rend la sortie pilotable au lieu d'un tirage de machine a sous.",
+  'render.prompt': 'Prompt',
+  'render.prompt.edit': "modifier a l'etape 2",
+  'render.prompt.chars': '{n} caracteres',
+  'render.settings': 'Reglages de sortie',
+  'render.resolution': 'Resolution',
+  'render.aspect': 'Format',
+  'render.aspect.scene': 'suit la scene ({v})',
+  'render.duration': 'Duree',
+  'render.audio': 'Bande son',
+  'render.audio.on': 'generee (cout accru)',
+  'render.audio.off': 'sans audio',
+  'render.images': 'Images de reference (une URL par ligne)',
+  'render.audioUrls': 'Piste son de reference',
+  'render.recap': '{passes}/2 passes · {duration}s · {resolution} · {aspect} · {audio}',
+  'render.cost':
+    'Un rendu Seedance est facture a la generation : verifie tes credits kie.ai avant d’envoyer.',
+  'render.send': 'Envoyer a Seedance',
+  'render.sending': 'Rendu en cours...',
+  'render.ready': "Tout est pret. L'envoi lance le rendu chez Seedance.",
+  'render.new': 'Nouveau rendu',
+  'render.task': 'tache {id}',
+  'render.wait.title': 'Rendu en cours',
+  'render.wait.body':
+    'Un rendu Seedance prend generalement plusieurs minutes. Garde cet onglet ouvert : le fermer fait perdre le suivi.',
+  'render.wait.elapsed': '{n} ecoulees',
+  'render.phase.uploading': 'Mise en ligne des passes',
+  'render.phase.submitting': 'Soumission a Seedance',
+  'render.phase.queued': "En file d'attente chez Seedance",
+  'render.phase.generating': 'Generation du plan',
+  'render.phase.polling': 'Rendu en cours',
+  'render.block.key': 'Une cle kie.ai est requise pour lancer un rendu.',
+  'render.block.passes': "Enregistre les {n} passe(s) manquante(s) avant d'envoyer.",
+  'render.block.duration':
+    "Seedance rend de 4 a 30 s. Ta prise fait {n} s : ajuste la duree a l'etape 1.",
+  'render.block.clips': '{n} passe(s) hors contraintes Seedance. Reenregistre-les.',
+  'render.block.prompt': "Le prompt est vide : reviens a l'etape 2.",
+  'render.leave.confirm': 'Un rendu est en cours. Quitter cette page fait perdre le suivi.',
+
+  // --- Capture -----------------------------------------------------------
+  'capture.pass1': 'Passe 1 / 2 — vue isometrique du decor',
+  'capture.pass2': 'Passe 2 / 2 — vue camera',
+  'capture.preparing': 'preparation',
+  'capture.recording': 'enregistrement',
+  'capture.noRecorder':
+    'Ce navigateur ne sait pas enregistrer de video. Utilise Chrome ou Edge recent.',
+  'capture.wrongFormat':
+    "Ce navigateur enregistre en {ext}. Seedance n'accepte que mp4 ou mov : convertis les clips, ou passe sur Chrome / Edge.",
+  'capture.noCanvas': 'Canvas de capture introuvable.',
+
+  // --- Erreurs -----------------------------------------------------------
+  'error.import': 'Import impossible : {message}',
+  'error.describe': 'Decris la scene avant de generer.',
+  'error.generate': 'Echec de la generation : {message}',
+};

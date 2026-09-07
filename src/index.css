@@ -1,0 +1,239 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+
+  /* Plancher de lisibilite. Blanc a 55% sur les fonds ink donne 5.3:1 : c'est le
+     niveau le plus discret encore conforme. En dessous, le texte cesse d'etre
+     lisible pour devenir de la texture. */
+  --text-muted: rgb(255 255 255 / 0.55);
+  --text-secondary: rgb(255 255 255 / 0.7);
+  --text-primary: rgb(255 255 255 / 0.92);
+
+  --signal: #f27d26;
+  --alert: #ff3b30;
+  --ok: #38d17a;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  background: #0a0b0d;
+  color: var(--text-primary);
+  font-family: 'Space Grotesk', Inter, system-ui, sans-serif;
+}
+
+html,
+body {
+  overflow: hidden;
+}
+
+/* #root doit pouvoir se defendre : un header trop etroit ne doit jamais amputer
+   ses propres commandes sans recours. */
+#root {
+  overflow: auto;
+  min-width: 0;
+}
+
+/* --- Surfaces que le navigateur dessine a notre place ---------------------- */
+
+::selection {
+  background: rgb(242 125 38 / 0.3);
+  color: #fff;
+}
+
+:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* Le focus clavier ne doit pas etre masque par le contour du champ lui-meme. */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline-offset: 0;
+}
+
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+::-webkit-scrollbar-track {
+  background: #101216;
+}
+::-webkit-scrollbar-thumb {
+  background: #2c313b;
+  border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3d434f;
+}
+
+/* Les chiffres qui defilent (timecode, mesures) ne doivent pas faire sauter la
+   mise en page a chaque image. */
+.tabular-nums,
+input[type='number'] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Curseurs -------------------------------------------------------------- */
+/* La piste reste fine, mais la zone de prehension fait 24px : c'est l'element
+   qui recoit le pointeur, pas la piste. */
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 24px;
+  background: transparent;
+  cursor: pointer;
+  display: block;
+}
+input[type='range']::-webkit-slider-runnable-track {
+  height: 3px;
+  background: #3d434f;
+  border-radius: 2px;
+}
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  margin-top: -6.5px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--signal);
+  border: 2px solid #101216;
+  transition: transform 120ms cubic-bezier(0.2, 0, 0, 1);
+}
+input[type='range']:hover::-webkit-slider-thumb {
+  transform: scale(1.15);
+}
+input[type='range']::-moz-range-track {
+  height: 3px;
+  background: #3d434f;
+  border-radius: 2px;
+}
+input[type='range']::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #101216;
+  border-radius: 50%;
+  background: var(--signal);
+}
+
+/* --- Composants partages --------------------------------------------------- */
+
+@layer components {
+  /* Le seul bouton plein de l'application. Reserve aux actions qui engagent :
+     generer, envoyer au rendu. Tout le reste reste en retrait. */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.25rem;
+    background: var(--signal);
+    padding: 0.625rem 1rem;
+    font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: #0a0b0d;
+    border: 1px solid transparent;
+    transition: background-color 150ms cubic-bezier(0.2, 0, 0, 1);
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: #ff8f3a;
+  }
+  .btn-primary:disabled {
+    cursor: not-allowed;
+    background: #20242c;
+    /* 0.45 tombait a 4.3:1 sur ce fond : un bouton desactive reste du texte a lire. */
+    color: rgb(255 255 255 / 0.6);
+  }
+
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    border-radius: 0.25rem;
+    border: 1px solid #2c313b;
+    background: #171a20;
+    padding: 0.375rem 0.625rem;
+    font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--text-secondary);
+    transition:
+      border-color 150ms cubic-bezier(0.2, 0, 0, 1),
+      color 150ms cubic-bezier(0.2, 0, 0, 1);
+  }
+  .btn-ghost:hover:not(:disabled) {
+    border-color: #3d434f;
+    color: #fff;
+  }
+  .btn-ghost:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+
+  .field {
+    display: block;
+    width: 100%;
+    border-radius: 0.25rem;
+    border: 1px solid #2c313b;
+    background: #0a0b0d;
+    padding: 0.5rem 0.625rem;
+    font-size: 12px;
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color 150ms cubic-bezier(0.2, 0, 0, 1);
+  }
+  .field:focus {
+    border-color: rgb(242 125 38 / 0.6);
+  }
+  .field::placeholder {
+    color: rgb(255 255 255 / 0.45);
+  }
+
+  .label-micro {
+    display: block;
+    font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--text-muted);
+  }
+}
+
+@keyframes indeterminate {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}
+.indeterminate {
+  animation: indeterminate 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.grain::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

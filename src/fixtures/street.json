@@ -1,0 +1,18 @@
+{
+  "project": { "name": "Street Demo", "duration": 12, "fps": 24, "aspectRatio": "16:9" },
+  "environment": { "type": "exterior" },
+  "zones": [
+    { "id": "zone_1", "name": "Sidewalk", "width": 12, "depth": 8, "height": 4, "color": "#2A2E33", "position": [0, 0, 0] },
+    { "id": "zone_2", "name": "Crossing", "width": 12, "depth": 8, "height": 4, "color": "#33383F", "position": [0, 0, -9] }
+  ],
+  "actors": [
+    { "id": "actor_1", "name": "Pedestrian", "height": 1.75, "startZone": "zone_1", "endZone": "zone_2", "action": "walks across the street", "color": "#F27D26" }
+  ],
+  "props": [
+    { "id": "prop_1", "name": "Parked Car", "type": "car", "zone": "zone_1", "position": [-3.5, 0, 1.5], "rotation": 0, "color": "#8A2F3A" },
+    { "id": "prop_2", "name": "Delivery Truck", "type": "truck", "zone": "zone_2", "position": [3.8, 0, -10], "rotation": 1.57, "color": "#3A5F8A" },
+    { "id": "prop_3", "name": "Plane Tree", "type": "tree", "zone": "zone_1", "position": [4.5, 0, 2.5], "rotation": 0, "color": "#3F6B3A" },
+    { "id": "prop_4", "name": "Street Lamp", "type": "lamp", "zone": "zone_2", "position": [-4.5, 0, -11], "rotation": 0, "color": "#6A6E75" }
+  ],
+  "camera": { "rig": "dolly", "lens": 28, "height": 1.6, "movement": "lateral dolly following the pedestrian", "target": "actor_1", "distance": 4 }
+}

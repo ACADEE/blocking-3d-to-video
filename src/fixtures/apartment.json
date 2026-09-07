@@ -1,0 +1,95 @@
+{
+  "project": {
+    "name": "Apartment Walk-through",
+    "duration": 12,
+    "fps": 24,
+    "aspectRatio": "16:9"
+  },
+  "environment": {
+    "type": "interior"
+  },
+  "zones": [
+    {
+      "id": "zone_1",
+      "name": "Living Room",
+      "width": 8,
+      "depth": 8,
+      "height": 3,
+      "color": "#2F2A26",
+      "position": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "zone_2",
+      "name": "Corridor",
+      "width": 2.2,
+      "depth": 10,
+      "height": 3,
+      "color": "#26292E",
+      "position": [
+        0,
+        0,
+        -9.5
+      ]
+    },
+    {
+      "id": "zone_3",
+      "name": "Kitchen",
+      "width": 8,
+      "depth": 8,
+      "height": 3,
+      "color": "#4A4A4A",
+      "position": [
+        7,
+        0,
+        -13
+      ]
+    }
+  ],
+  "actors": [
+    {
+      "id": "actor_1",
+      "name": "Woman",
+      "height": 1.7,
+      "startZone": "zone_1",
+      "endZone": "zone_3",
+      "action": "leaves the living room, walks down the corridor and turns into the kitchen",
+      "color": "#F27D26"
+    },
+    {
+      "id": "actor_2",
+      "name": "Man",
+      "height": 1.82,
+      "startZone": "zone_1",
+      "endZone": "zone_1",
+      "action": "crosses the living room",
+      "color": "#2F6B8A"
+    }
+  ],
+  "props": [
+    {
+      "id": "prop_1",
+      "name": "Dining Table",
+      "type": "table",
+      "zone": "zone_1",
+      "position": [
+        -2.2,
+        0,
+        -1.5
+      ],
+      "rotation": 0,
+      "color": "#6A5A45"
+    }
+  ],
+  "camera": {
+    "rig": "steadicam",
+    "lens": 35,
+    "height": 1.6,
+    "movement": "continuous follow in one uninterrupted take",
+    "target": "actor_1",
+    "distance": 2
+  }
+}

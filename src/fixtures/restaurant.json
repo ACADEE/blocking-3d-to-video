@@ -1,0 +1,14 @@
+{
+  "project": { "name": "Generated Scene", "duration": 15, "fps": 24, "aspectRatio": "16:9" },
+  "environment": { "type": "interior" },
+  "zones": [
+    { "id": "zone_1", "name": "Restaurant Entrance", "width": 6, "depth": 6, "height": 3, "color": "#2A2A2A", "position": [0, 0, 0] },
+    { "id": "zone_2", "name": "Main Dining Room", "width": 10, "depth": 10, "height": 3, "color": "#3A2F28", "position": [0, 0, -8] },
+    { "id": "zone_3", "name": "Kitchen", "width": 8, "depth": 8, "height": 3, "color": "#4A4A4A", "position": [0, 0, -18] }
+  ],
+  "actors": [
+    { "id": "actor_1", "name": "Woman", "height": 1.7, "startZone": "zone_1", "endZone": "zone_3", "action": "enters, crosses the main dining room, and walks into the kitchen", "color": "#F27D26" },
+    { "id": "actor_2", "name": "Waiter", "height": 1.75, "startZone": "zone_2", "endZone": "zone_2", "action": "crosses behind the woman", "color": "#2F6B8A" }
+  ],
+  "camera": { "rig": "steadicam", "lens": 35, "height": 1.6, "movement": "continuous follow in one uninterrupted take", "target": "actor_1", "distance": 2 }
+}

@@ -1,0 +1,33 @@
+{
+  "name": "blocking-3d-to-video",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Turn a written scene into a 3D blocking, then into a photoreal shot with Seedance 2.5",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/ACADEE/blocking-3d-to-video.git" },
+  "keywords": ["previz", "blocking", "three.js", "react-three-fiber", "seedance", "text-to-video", "storyboard", "cinematography"],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@react-three/drei": "^9.114.3",
+    "@react-three/fiber": "^8.17.10",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "three": "^0.170.0",
+    "zustand": "^4.5.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.3",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.14",
+    "vite": "^5.4.10",
+    "vitest": "^2.1.4"
+  }
+}
