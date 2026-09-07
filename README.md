@@ -14,7 +14,9 @@ your staging* instead of inventing its own.
 [![Tests](https://img.shields.io/badge/tests-100%20passing-38d17a)](#testing)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-[Quick start](#quick-start) · [How it works](#how-it-works) · [The three steps](#the-three-steps) · [Editing](#editing-the-blocking) · [Exports](#exports) · [Architecture](#architecture)
+[Quick start](#quick-start) · [Features](#what-it-gives-you) · [How it works](#how-it-works) · [The three steps](#the-three-steps) · [Editing](#editing-the-blocking) · [Exports](#exports) · [Architecture](#architecture)
+
+[Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md)
 
 </div>
 
@@ -32,6 +34,28 @@ reference footage. It follows the geometry you built and spends its intelligence
 faces, materials, light.
 
 > The blocking is the skeleton. The model adds the photography.
+
+---
+
+## What it gives you
+
+| | |
+|---|---|
+| **Scene from text** | A written description becomes a structured SceneGraph: rooms, characters, props, camera. |
+| **Continuous motion** | Characters route through real doorways at constant walking speed. They never teleport, slide or snap. |
+| **Camera rigs** | Steadicam, handheld, static, dolly, crane — with focal length, height and follow distance. |
+| **Real collision detection** | The camera track is swept against the set frame by frame. Real timecode, real obstacle name. |
+| **Escalating auto-correct** | Path relaxation first, then bounded rig variants. Never applies a result worse than the current one. |
+| **Direct editing** | Drag objects and zones, edit character paths point by point, key the camera at any timecode. |
+| **Edit by prompt** | `add a red car near the entrance` returns a patch, so hand-tuned work survives. |
+| **Reference images** | Attach an image to any actor, prop or zone — numbered and described in the generated prompt. |
+| **AI geometry** | Let the model write the actual mesh, for the browser and for Blender, inside an imposed bounding box. |
+| **Three viewports** | Camera (through the lens), Top (floor plan), Orbit (free inspection). |
+| **Frame-accurate timeline** | Scrub, step, loop, 0.25×–2×, with collision bands and doorway crossings marked. |
+| **Video passes** | Two blocking passes recorded to mp4 and sent to Seedance 2.5 as reference. |
+| **Task tracking** | Live state, progress and credits from kie.ai — and recovery of any render from its `taskId`. |
+| **Blender export** | Set, actors and camera baked one keyframe per frame, axis conversion applied. |
+| **English & French** | One click, and the model prompts always stay in English. |
 
 ---
 
@@ -155,6 +179,15 @@ The prompt gains a section that draws the line explicitly:
 - **Do not reproduce** the grey proxy look, the coloured cylinders, the wireframes, the labels.
 
 Without that section a video model happily imitates the previz aesthetic and returns grey cylinders.
+
+The two passes sit **above** the result player — they are what you produce here; the render is what
+comes back. **Play all** starts every player from the top together, so the blocking and the rendered
+shot can be compared at the same instant rather than at whatever moment each happened to be paused.
+
+Every wait that has no knowable duration shows a spinner rather than a frozen label. The capture step
+keeps a real progress bar, because there the duration *is* known. An indicator that claims to know a
+duration nobody knows is a lie, so the render wait stays indeterminate — unless the API reports
+`progress`, in which case the real figure is shown.
 
 ---
 
@@ -289,7 +322,8 @@ src/
   proxies/     registry.js (types, bounds) · Proxies.jsx · AIModel.jsx
   components/  IntroScreen · Header · PipelineRail · Viewport · Timeline
                Inspector · SystemAlert · EditToolbar · SceneEditing
-               ScenePrompt · RefImage · PromptScreen · RenderScreen · CaptureStage
+               ScenePrompt · RefImage · TaskTracker · Spinner
+               PromptScreen · RenderScreen · CaptureStage
   i18n/        index.js · en.js · fr.js
   fixtures/    restaurant · apartment · street
 ```
@@ -297,9 +331,19 @@ src/
 **Stack:** Vite · React 18 · react-three-fiber + drei · three.js · zustand · Tailwind · vitest.
 
 `normalize.js` is the guard rail between the model and the renderer: unique ids, broken references
-re-pointed, overlapping rooms pushed apart, props pulled inside their zone — and doors magnetised
-onto their opening, because a door lives *between* two rooms and clamping it into one drops it in
-the middle of the passage. Every fix is surfaced as a warning.
+re-pointed, overlapping rooms pushed apart, props pulled inside their zone. Every fix is surfaced as
+a warning rather than applied in silence.
+
+Two of those rules exist because their absence produced real, hard-to-see bugs:
+
+- **Doors are magnetised onto their opening.** A door lives *between* two rooms, so clamping it into
+  one drops it in the middle of the passage, straight across the camera path.
+- **A door is a frame, not a block.** Its collision volume is two jambs and a lintel, matching the
+  proxy you see. A single box would seal the opening it is meant to represent — and no amount of
+  path correction can route a camera through a sealed wall.
+
+Prop rotation is honoured in collision too: a truck turned a quarter turn occupies 7.2 × 2.4 m, not
+2.4 × 7.2. The axis-aligned volume is derived from the oriented one rather than ignoring the angle.
 
 ### Testing
 
@@ -309,17 +353,30 @@ the middle of the passage. Every fix is surfaced as a warning.
 npm test
 ```
 
-They cover the things that would silently rot: per-frame displacement stays bounded by walking speed
-(the no-teleport guarantee), doorways stay passable, camera keys are hit exactly, auto-correction is
-verified in the final representation, Blender export axis conversion, Seedance payload rules, and
-dictionary parity between English and French.
+They cover the things that would silently rot:
+
+- per-frame displacement stays bounded by walking speed — the no-teleport guarantee, checked on both
+  computed and hand-edited paths
+- a door left in its opening keeps the passage walkable, and does not cost more contacts than a scene
+  without one
+- camera keys are hit exactly at their timecode, and an imported legacy trajectory migrates to keys
+- auto-correction is verified in the representation the engine actually uses, never on an
+  intermediate polyline
+- `recordInfo` parsing, the five documented task states, and a poll delay that grows then caps
+- Blender export axis conversion, Seedance payload rules, and dictionary parity between the two
+  languages
 
 ---
 
 ## Internationalisation
 
-English by default, French one click away, browser language respected on first visit. Prompts sent
-to the model always stay in English — they address a machine, not a reader.
+**English by default, always.** Following the browser's language opened the app in French for half
+its visitors while the repository and its documentation are in English; only an explicit choice,
+persisted in `localStorage`, overrides the default. French is one click away in the header.
+
+Prompts sent to the model always stay in English — they address a machine, not a reader. A test
+asserts both dictionaries carry the same keys and the same interpolation variables, so a translation
+can never silently fall back mid-sentence.
 
 ---
 
@@ -338,9 +395,10 @@ to the model always stay in English — they address a machine, not a reader.
 
 ## Roadmap
 
-- [ ] Session persistence — a refresh currently loses the scene, clips and render
+- [ ] Session persistence — a refresh still loses the scene, the clips and the render
 - [ ] Bézier handles on path points, on top of the current draggable waypoints
 - [ ] Multi-shot sequences
+- [ ] A callback endpoint, so long renders stop depending on an open tab
 
 ---
 
