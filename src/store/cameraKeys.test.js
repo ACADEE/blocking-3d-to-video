@@ -34,6 +34,13 @@ describe('cles camera : deplacer, inserer, supprimer', () => {
     expect(after[1]).toEqual(before[1]);
   });
 
+  it("efface l'apercu de glisse au moment du commit", () => {
+    useStore.getState().setCameraDragPreview({ position: [9, 9, 9], curve: [[9, 9, 9]] });
+    expect(useStore.getState().cameraDragPreview).not.toBeNull();
+    useStore.getState().moveCameraKey(0, [2, 1.8, 4]);
+    expect(useStore.getState().cameraDragPreview).toBeNull();
+  });
+
   it('insere une cle a mi-chemin de deux cles voisines, triee par instant', () => {
     useStore.getState().insertCameraKeyAfter(0, [1, 1.6, -4]);
     const keys = useStore.getState().scene.camera.keys;

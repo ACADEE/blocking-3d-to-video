@@ -4,7 +4,7 @@ import apartment from '../fixtures/apartment.json';
 import { normalizeSceneGraph } from './normalize.js';
 import { solveScene } from './build.js';
 import { samplePathAtT } from './paths.js';
-import { makeKeyTrack, waypointsToKeys, cameraAtTime } from './camera.js';
+import { makeKeyTrack, waypointsToKeys, cameraAtTime, sampleKeyTrackPositions } from './camera.js';
 
 const load = (mutate = () => {}) => {
   const raw = JSON.parse(JSON.stringify(apartment));
@@ -137,5 +137,45 @@ describe("cles d'animation camera", () => {
     const mid = cameraAtTime(solve.track, scene.project.duration / 2);
     expect(mid.position).toBeInstanceOf(Vector3);
     expect(Number.isFinite(mid.position.x)).toBe(true);
+  });
+});
+
+describe("apercu de glisse d'une cle camera", () => {
+  // Sert au retour visuel en direct pendant qu'on tire une poignee : la
+  // courbe doit rester exactement celle que le solveur produirait, sans
+  // repasser par lui.
+  const keys = [
+    { t: 0, position: [0, 1.6, 4] },
+    { t: 6, position: [0, 1.6, -4] },
+    { t: 12, position: [0, 1.6, -12] },
+  ];
+
+  it('renvoie exactement le nombre de points demande', () => {
+    expect(sampleKeyTrackPositions(keys, 12, 60)).toHaveLength(60);
+    expect(sampleKeyTrackPositions(keys, 12, 10)).toHaveLength(10);
+  });
+
+  it('suit une cle deplacee : un point proche de son instant est proche de sa nouvelle position', () => {
+    const moved = keys.map((k) => (k.t === 6 ? { ...k, position: [5, 1.6, -4] } : k));
+    const points = sampleKeyTrackPositions(moved, 12, 60);
+    const atMidTime = points[Math.round((6 / 12) * (points.length - 1))];
+    expect(atMidTime[0]).toBeCloseTo(5, 0);
+  });
+
+  it('deux cles seulement : ligne droite, aucune derive laterale', () => {
+    const straight = [
+      { t: 0, position: [0, 1.6, 4] },
+      { t: 12, position: [0, 1.6, -12] },
+    ];
+    const points = sampleKeyTrackPositions(straight, 12, 60);
+    const maxDrift = Math.max(...points.map((p) => Math.abs(p[0])));
+    expect(maxDrift).toBeLessThan(0.01);
+  });
+
+  it('renvoie un tableau vide sur une entree degeneree, sans lever', () => {
+    expect(sampleKeyTrackPositions(null, 12)).toEqual([]);
+    expect(sampleKeyTrackPositions([keys[0]], 12)).toEqual([]);
+    expect(sampleKeyTrackPositions(keys, 0)).toEqual([]);
+    expect(sampleKeyTrackPositions(keys, -1)).toEqual([]);
   });
 });

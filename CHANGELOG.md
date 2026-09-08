@@ -17,6 +17,19 @@ Notable changes to BLOCKING.3D. Format loosely follows
 
 ### Added
 
+- **Editable camera trajectory.** Camera keys are no longer static markers: click one to select
+  it, drag it in 3D (including height) and the curved trajectory — the same centripetal
+  Catmull-Rom curve the solver actually produces, not a straight-line stand-in — reshapes live,
+  before you release. Click the ribbon between two keys to insert a new one at their midpoint in
+  time; `Delete` removes the selected key. Collision colouring returns the instant you let go and
+  the scene re-solves; while dragging, the ribbon shows a plain preview because collision against
+  the set isn't recomputed on every frame — recomputing the whole scene per pointer-move would
+  cost far more than a drag should.
+- **Per-element reference images, visible at a glance.** Every actor, prop and zone row now
+  carries its own thumbnail/upload slot in the inspector, instead of only the currently selected
+  element. With four actors, four independent images are visible without clicking through them
+  one at a time — the data was already per-element (`scene.refs[entityId]`); only the affordance
+  to see it was missing.
 - **Loading feedback.** A shared spinner on every wait whose duration cannot be known: scene
   generation, key test, auto-correct, AI modelling, scene edits, reference upload, render submit.
   The capture step keeps its progress bar, because there the duration genuinely is known.

@@ -4,6 +4,7 @@ import { Line, TransformControls } from '@react-three/drei';
 import { Vector3 } from 'three';
 import { useStore } from '../store/useStore.js';
 import { propBounds, inferActorType, PROXY_BOUNDS } from '../proxies/registry.js';
+import { sampleKeyTrackPositions } from '../scene/camera.js';
 
 // Edition directe dans le viewport.
 //
@@ -122,7 +123,7 @@ function PathHandles({ actor, selectedIndex, onSelectPoint, onMovePoint, onInser
   );
 }
 
-function MovableHandle({ position, onCommit, showY = false }) {
+function MovableHandle({ position, onCommit, onDrag, showY = false, children }) {
   const ref = useRef();
   const controls = useRef();
 
@@ -137,11 +138,18 @@ function MovableHandle({ position, onCommit, showY = false }) {
   }, [onCommit]);
 
   return (
-    <TransformControls ref={controls} mode="translate" showY={showY} size={0.6}>
+    <TransformControls
+      ref={controls}
+      mode="translate"
+      showY={showY}
+      size={0.6}
+      onObjectChange={onDrag ? () => ref.current && onDrag(ref.current.position.toArray()) : undefined}
+    >
       <group ref={ref} position={position}>
         <mesh visible={false}>
           <boxGeometry args={[0.2, 0.2, 0.2]} />
         </mesh>
+        {children}
       </group>
     </TransformControls>
   );
@@ -155,10 +163,61 @@ function MovableHandle({ position, onCommit, showY = false }) {
  * selectionne et fait apparaitre une poignee qu'on peut etirer (y compris en
  * hauteur, contrairement aux points de trajectoire au sol).
  */
-function CameraKeyHandles({ keys, selectedT, onSelectKey, onMoveKey, onInsert }) {
-  const line = useMemo(() => (keys || []).map((k) => k.position), [keys]);
+function CameraKeyHandles({ keys, duration, selectedT, onSelectKey, onMoveKey, onInsert }) {
+  const setCameraDragPreview = useStore((s) => s.setCameraDragPreview);
+  const clearCameraDragPreview = useStore((s) => s.clearCameraDragPreview);
+  const [dragPos, setDragPos] = useState(null); // [x,y,z] en direct, sinon null
+  const latestDragPos = useRef(null);
+  const dragRaf = useRef(null);
+
+  // Une deselection (ou un remplacement de cle) en plein glisse ne doit pas
+  // laisser un apercu perime accroche dans le store.
+  useEffect(() => {
+    setDragPos(null);
+    clearCameraDragPreview();
+  }, [selectedT, clearCameraDragPreview]);
+
+  useEffect(
+    () => () => {
+      if (dragRaf.current != null) cancelAnimationFrame(dragRaf.current);
+    },
+    []
+  );
+
+  const line = useMemo(() => {
+    if (!keys) return [];
+    return keys.map((k) => (dragPos && Math.abs(k.t - selectedT) < 1e-3 ? dragPos : k.position));
+  }, [keys, dragPos, selectedT]);
+
   if (!keys?.length) return null;
   const selected = keys.find((k) => Math.abs(k.t - selectedT) < 1e-3);
+
+  // Marqueur + polyligne de controle : pas de plafond, geometrie minuscule.
+  // La courbe reelle (plus couteuse) est plafonnee a une image par
+  // requestAnimationFrame, avec la DERNIERE position connue au reveil (pas
+  // celle de la programmation) pour ne jamais servir une valeur perimee sous
+  // un glisse rapide.
+  const handleDrag = (pos) => {
+    setDragPos(pos);
+    latestDragPos.current = pos;
+    if (dragRaf.current != null) return;
+    dragRaf.current = requestAnimationFrame(() => {
+      dragRaf.current = null;
+      if (!selected) return;
+      const p = latestDragPos.current;
+      const tempKeys = keys.map((k) => (k.t === selected.t ? { ...k, position: p } : k));
+      setCameraDragPreview({ position: p, curve: sampleKeyTrackPositions(tempKeys, duration, 60) });
+    });
+  };
+
+  const handleCommit = (pos) => {
+    setDragPos(null);
+    if (dragRaf.current != null) {
+      cancelAnimationFrame(dragRaf.current);
+      dragRaf.current = null;
+    }
+    onMoveKey(selected.t, pos); // moveCameraKey efface cameraDragPreview au meme geste
+  };
 
   return (
     <group>
@@ -189,22 +248,34 @@ function CameraKeyHandles({ keys, selectedT, onSelectKey, onMoveKey, onInsert })
         />
       )}
 
-      {keys.map((k) => (
-        <mesh
-          key={k.t}
-          position={k.position}
-          onClick={(e) => {
-            e.stopPropagation();
-            onSelectKey(k.t);
-          }}
-        >
-          <octahedronGeometry args={[0.16]} />
-          <meshBasicMaterial color={Math.abs(k.t - selectedT) < 1e-3 ? '#ffffff' : '#38d17a'} />
-        </mesh>
-      ))}
+      {keys
+        .filter((k) => Math.abs(k.t - selectedT) >= 1e-3)
+        .map((k) => (
+          <mesh
+            key={k.t}
+            position={k.position}
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelectKey(k.t);
+            }}
+          >
+            <octahedronGeometry args={[0.16]} />
+            <meshBasicMaterial color="#38d17a" />
+          </mesh>
+        ))}
 
       {selected && (
-        <MovableHandle position={selected.position} showY onCommit={(pos) => onMoveKey(selected.t, pos)} />
+        <MovableHandle position={selected.position} showY onDrag={handleDrag} onCommit={handleCommit}>
+          <mesh
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelectKey(selected.t);
+            }}
+          >
+            <octahedronGeometry args={[0.16]} />
+            <meshBasicMaterial color="#ffffff" />
+          </mesh>
+        </MovableHandle>
       )}
     </group>
   );
@@ -258,6 +329,16 @@ export default function SceneEditing() {
     return () => window.removeEventListener('keydown', onKey);
   }, [cameraKeyT, removeCameraKey]);
 
+  // Filet de securite : si ce composant est demonte en plein glisse (le
+  // parent demonte <SceneEditing/> en quittant Orbite/Plan), l'apercu
+  // transitoire ne doit pas rester accroche dans le store.
+  useEffect(
+    () => () => {
+      if (useStore.getState().cameraDragPreview) useStore.getState().clearCameraDragPreview();
+    },
+    []
+  );
+
   if (!scene || !solve || editMode === 'off' || viewMode === 'director') return null;
 
   const actor =
@@ -269,6 +350,7 @@ export default function SceneEditing() {
     <group>
       <CameraKeyHandles
         keys={scene.camera.keys}
+        duration={scene.project.duration}
         selectedT={cameraKeyT}
         onSelectKey={(t) => {
           setPointIndex(null);

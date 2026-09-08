@@ -11,7 +11,7 @@ your staging* instead of inventing its own.
 [![Vite](https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white)](https://vitejs.dev)
 [![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)](https://react.dev)
 [![three.js](https://img.shields.io/badge/three.js-r170-000000?logo=threedotjs&logoColor=white)](https://threejs.org)
-[![Tests](https://img.shields.io/badge/tests-100%20passing-38d17a)](#testing)
+[![Tests](https://img.shields.io/badge/tests-110%20passing-38d17a)](#testing)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 [Quick start](#quick-start) · [Features](#what-it-gives-you) · [How it works](#how-it-works) · [The three steps](#the-three-steps) · [Editing](#editing-the-blocking) · [Exports](#exports) · [Architecture](#architecture)
@@ -46,9 +46,9 @@ faces, materials, light.
 | **Camera rigs** | Steadicam, handheld, static, dolly, crane — with focal length, height and follow distance. |
 | **Real collision detection** | The camera track is swept against the set frame by frame. Real timecode, real obstacle name. |
 | **Escalating auto-correct** | Path relaxation first, then bounded rig variants. Never applies a result worse than the current one. |
-| **Direct editing** | Drag objects and zones, edit character paths point by point, key the camera at any timecode. |
+| **Direct editing** | Drag objects and zones, edit character paths point by point, drag a camera key and watch the trajectory reshape live. |
 | **Edit by prompt** | `add a red car near the entrance` returns a patch, so hand-tuned work survives. |
-| **Reference images** | Attach an image to any actor, prop or zone — numbered and described in the generated prompt. |
+| **Reference images** | Attach an image to any actor, prop or zone — one thumbnail per row, numbered and described in the generated prompt. |
 | **AI geometry** | Let the model write the actual mesh, for the browser and for Blender, inside an imposed bounding box. |
 | **Three viewports** | Camera (through the lens), Top (floor plan), Orbit (free inspection). |
 | **Frame-accurate timeline** | Scrub, step, loop, 0.25×–2×, with collision bands and doorway crossings marked. |
@@ -77,7 +77,7 @@ auto-correction and the full editing toolset immediately.
 | `npm run dev` | Dev server with the kie.ai proxy (avoids CORS) |
 | `npm run build` | Production build into `dist/` |
 | `npm run preview` | Serve the production build |
-| `npm test` | 100 tests on the geometry engine, exports, task tracking and i18n |
+| `npm test` | 110 tests on the geometry engine, exports, task tracking and i18n |
 | `npm run test:watch` | Same, in watch mode |
 
 **Requirements:** Node 18+, and a Chromium-based browser for the video capture step
@@ -235,9 +235,9 @@ re-solved — the scene stays a pure function of time, so playback and scrubbing
 |---|---|
 | **Objects & zones** | Select, then drag the gizmo. Moving a zone rebuilds the doorway graph and every route. |
 | **Character paths** | **Edit path** freezes the computed route into handles. Drag one to move it, click the line to insert a point, `Delete` to remove one. |
-| **Camera** | Place the camera in Top or Orbit view and **Key the camera here** records position and orientation at the current timecode. |
+| **Camera** | Place the camera in Top or Orbit view and **Key the camera here** records position and orientation at the current timecode. Click a key to select it, drag it in 3D — height included — and the curved trajectory reshapes live, before you let go. Click the green ribbon between two keys to insert one at their midpoint in time; `Delete` removes the selected key. |
 | **Add elements** | Type `add a red car near the entrance`. The model returns a **patch**, never a full graph — so your hand-tuned paths and positions survive. |
-| **Reference images** | Attach an image to any actor, prop or zone. It is sent to Seedance *and named in the prompt* (`reference image 2 shows the KITCHEN`), which is the only way to bind an image to an element with this API. |
+| **Reference images** | Attach an image to any actor, prop or zone — every row in the inspector carries its own thumbnail, so four actors show four independent images at a glance. It is sent to Seedance *and named in the prompt* (`reference image 2 shows the KITCHEN`), which is the only way to bind an image to an element with this API. |
 | **AI geometry** | Let GPT-6 Astra write the actual mesh — three.js for the browser, Python for the Blender export. The bounding box is imposed and re-verified, so a detailed model never moves your framing or your collision volumes. |
 
 Three viewports: **Camera** (through the lens, with an aspect matte), **Top** (orthographic floor
@@ -347,7 +347,7 @@ Prop rotation is honoured in collision too: a truck turned a quarter turn occupi
 
 ### Testing
 
-100 tests, run serially so the suite never lies about its own scope:
+110 tests, run serially so the suite never lies about its own scope:
 
 ```bash
 npm test
@@ -360,6 +360,9 @@ They cover the things that would silently rot:
 - a door left in its opening keeps the passage walkable, and does not cost more contacts than a scene
   without one
 - camera keys are hit exactly at their timecode, and an imported legacy trajectory migrates to keys
+- the live drag preview samples exactly the curve the real solve would produce — the same
+  Catmull-Rom construction, not an approximation — and the store clears it the instant a drag
+  commits
 - auto-correction is verified in the representation the engine actually uses, never on an
   intermediate polyline
 - `recordInfo` parsing, the five documented task states, and a poll delay that grows then caps

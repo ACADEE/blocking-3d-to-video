@@ -86,6 +86,12 @@ export const useStore = create((set, get) => ({
   correcting: false,
   correction: null, // { note, source, before, after, previousCamera }
 
+  // Apercu de glisse camera : jamais persiste dans `scene`. Porte la position
+  // et la courbe recalculee EN DIRECT pendant qu'on tire une poignee de cle.
+  // `Trajectories` le lit pour remplacer le ruban colore (qui suppose une
+  // collision resolue) par un apercu vert plein tant que le glisse dure.
+  cameraDragPreview: null, // { position: number[], curve: number[][] } | null
+
   // Modelisation IA : id d'entite -> 'three' | 'blender' en cours, ou message d'erreur.
   modeling: null,
   modelError: null,
@@ -335,8 +341,16 @@ export const useStore = create((set, get) => ({
     const keys = scene.camera.keys.map((k) =>
       Math.abs(k.t - t) < 1e-3 ? { ...k, position: position.map(round) } : k
     );
+    // L'apercu de glisse n'a plus de raison d'etre des que la scene fait
+    // autorite a nouveau.
+    set({ cameraDragPreview: null });
     patchScene({ camera: { ...scene.camera, keys } });
   },
+
+  setCameraDragPreview: (preview) => set({ cameraDragPreview: preview }),
+
+  clearCameraDragPreview: () =>
+    set((s) => (s.cameraDragPreview ? { cameraDragPreview: null } : {})),
 
   /** Insere une cle entre deux cles existantes, au clic sur le ruban vert. */
   insertCameraKeyAfter: (afterT, position) => {

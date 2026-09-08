@@ -93,6 +93,27 @@ export function makeKeyTrack(keys) {
 }
 
 /**
+ * Echantillonne une piste sur cles en N points repartis uniformement dans le
+ * temps. Meme construction que le solveur (Catmull-Rom centripete) mais sans
+ * repasser par tout `solveScene` : sert a l'apercu de glisse en direct, qui
+ * doit rester bon marche a 60 im/s.
+ *
+ * @param {{t:number, position:number[], target?:number[]}[]} keys
+ * @param {number} duration
+ * @param {number} count
+ * @returns {number[][]} points [x,y,z], directement utilisables par <Line points=.../>
+ */
+export function sampleKeyTrackPositions(keys, duration, count = 60) {
+  if (!keys || keys.length < 2 || !(duration > 0)) return [];
+  const track = makeKeyTrack(keys);
+  const n = Math.max(2, count);
+  return Array.from({ length: n }, (_, i) => {
+    const p = track.positionAt((i / (n - 1)) * duration);
+    return [p.x, p.y, p.z];
+  });
+}
+
+/**
  * Convertit une polyligne spatiale en cles reparties dans le temps.
  * Utilise pour que l'auto-correction produise, elle aussi, des cles editables a
  * la main : il n'existe qu'un seul mecanisme de trajectoire imposee.

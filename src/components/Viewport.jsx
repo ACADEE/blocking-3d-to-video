@@ -223,6 +223,7 @@ function Props({ props, selection, onSelect, labels, plan, models }) {
 
 /** Trajectoires : acteurs en pointille clair, camera en ruban vert (rouge en contact). */
 function Trajectories({ scene, solve }) {
+  const cameraDragPreview = useStore((s) => s.cameraDragPreview);
   const segments = useMemo(() => {
     const pos = solve.track.positions;
     const colliding = solve.collision.collidingFrames;
@@ -262,16 +263,22 @@ function Trajectories({ scene, solve }) {
           />
         );
       })}
-      {segments.map((run, i) => (
-        <Line
-          key={i}
-          points={run.points}
-          color={run.bad ? '#ff3b30' : '#38d17a'}
-          lineWidth={run.bad ? 3.4 : 1.9}
-          transparent
-          opacity={run.bad ? 1 : 0.75}
-        />
-      ))}
+      {cameraDragPreview ? (
+        // Glisse en cours : la collision n'est pas connue en direct, donc pas
+        // de segments rouges tant que le geste n'est pas relache.
+        <Line points={cameraDragPreview.curve} color="#38d17a" lineWidth={2.4} transparent opacity={0.95} />
+      ) : (
+        segments.map((run, i) => (
+          <Line
+            key={i}
+            points={run.points}
+            color={run.bad ? '#ff3b30' : '#38d17a'}
+            lineWidth={run.bad ? 3.4 : 1.9}
+            transparent
+            opacity={run.bad ? 1 : 0.75}
+          />
+        ))
+      )}
     </group>
   );
 }
