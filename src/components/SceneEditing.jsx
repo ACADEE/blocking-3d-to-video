@@ -122,7 +122,7 @@ function PathHandles({ actor, selectedIndex, onSelectPoint, onMovePoint, onInser
   );
 }
 
-function MovableHandle({ position, onCommit }) {
+function MovableHandle({ position, onCommit, showY = false }) {
   const ref = useRef();
   const controls = useRef();
 
@@ -137,7 +137,7 @@ function MovableHandle({ position, onCommit }) {
   }, [onCommit]);
 
   return (
-    <TransformControls ref={controls} mode="translate" showY={false} size={0.6}>
+    <TransformControls ref={controls} mode="translate" showY={showY} size={0.6}>
       <group ref={ref} position={position}>
         <mesh visible={false}>
           <boxGeometry args={[0.2, 0.2, 0.2]} />
@@ -147,17 +147,65 @@ function MovableHandle({ position, onCommit }) {
   );
 }
 
-/** Marqueurs des cles camera, pour les voir dans l'espace. */
-function CameraKeys({ keys }) {
+/**
+ * Poignees de la trajectoire camera.
+ *
+ * Meme principe que PathHandles : le ruban vert affiche les cles, un clic
+ * dessus insere une cle a mi-chemin des deux voisines, un clic sur une cle la
+ * selectionne et fait apparaitre une poignee qu'on peut etirer (y compris en
+ * hauteur, contrairement aux points de trajectoire au sol).
+ */
+function CameraKeyHandles({ keys, selectedT, onSelectKey, onMoveKey, onInsert }) {
+  const line = useMemo(() => (keys || []).map((k) => k.position), [keys]);
   if (!keys?.length) return null;
+  const selected = keys.find((k) => Math.abs(k.t - selectedT) < 1e-3);
+
   return (
     <group>
-      {keys.map((k, i) => (
-        <mesh key={i} position={k.position}>
+      {line.length >= 2 && (
+        <Line
+          points={line}
+          color="#38d17a"
+          lineWidth={2.5}
+          transparent
+          opacity={0.8}
+          onClick={(e) => {
+            e.stopPropagation();
+            const p = e.point;
+            let best = 1;
+            let bestDist = Infinity;
+            for (let i = 1; i < keys.length; i += 1) {
+              const a = new Vector3(...keys[i - 1].position);
+              const b = new Vector3(...keys[i].position);
+              const mid = a.clone().add(b).multiplyScalar(0.5);
+              const d = mid.distanceTo(new Vector3(p.x, p.y, p.z));
+              if (d < bestDist) {
+                bestDist = d;
+                best = i;
+              }
+            }
+            onInsert(keys[best - 1].t, [p.x, p.y, p.z]);
+          }}
+        />
+      )}
+
+      {keys.map((k) => (
+        <mesh
+          key={k.t}
+          position={k.position}
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelectKey(k.t);
+          }}
+        >
           <octahedronGeometry args={[0.16]} />
-          <meshBasicMaterial color="#38d17a" />
+          <meshBasicMaterial color={Math.abs(k.t - selectedT) < 1e-3 ? '#ffffff' : '#38d17a'} />
         </mesh>
       ))}
+
+      {selected && (
+        <MovableHandle position={selected.position} showY onCommit={(pos) => onMoveKey(selected.t, pos)} />
+      )}
     </group>
   );
 }
@@ -172,7 +220,11 @@ export default function SceneEditing() {
   const setActorPath = useStore((s) => s.setActorPath);
   const insertActorWaypoint = useStore((s) => s.insertActorWaypoint);
   const removeActorWaypoint = useStore((s) => s.removeActorWaypoint);
+  const moveCameraKey = useStore((s) => s.moveCameraKey);
+  const insertCameraKeyAfter = useStore((s) => s.insertCameraKeyAfter);
+  const removeCameraKey = useStore((s) => s.removeCameraKey);
   const [pointIndex, setPointIndex] = useState(null);
+  const [cameraKeyT, setCameraKeyT] = useState(null);
 
   useEffect(() => setPointIndex(null), [selection?.id]);
 
@@ -191,6 +243,21 @@ export default function SceneEditing() {
     return () => window.removeEventListener('keydown', onKey);
   }, [pointIndex, selection, removeActorWaypoint]);
 
+  // Suppression d'une cle camera au clavier, meme geste que pour un point de trajectoire.
+  useEffect(() => {
+    if (cameraKeyT == null) return undefined;
+    const onKey = (e) => {
+      if (e.key !== 'Delete' && e.key !== 'Backspace') return;
+      const tag = e.target?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      e.preventDefault();
+      removeCameraKey(cameraKeyT);
+      setCameraKeyT(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [cameraKeyT, removeCameraKey]);
+
   if (!scene || !solve || editMode === 'off' || viewMode === 'director') return null;
 
   const actor =
@@ -200,7 +267,16 @@ export default function SceneEditing() {
 
   return (
     <group>
-      <CameraKeys keys={scene.camera.keys} />
+      <CameraKeyHandles
+        keys={scene.camera.keys}
+        selectedT={cameraKeyT}
+        onSelectKey={(t) => {
+          setPointIndex(null);
+          setCameraKeyT(t);
+        }}
+        onMoveKey={(t, pos) => moveCameraKey(t, pos)}
+        onInsert={(afterT, pos) => insertCameraKeyAfter(afterT, pos)}
+      />
 
       {prop && editMode !== 'select' && (
         <EntityGizmo
@@ -228,7 +304,10 @@ export default function SceneEditing() {
         <PathHandles
           actor={actor}
           selectedIndex={pointIndex}
-          onSelectPoint={setPointIndex}
+          onSelectPoint={(i) => {
+            setCameraKeyT(null);
+            setPointIndex(i);
+          }}
           onMovePoint={(i, pos) => {
             const next = actor.waypoints.map((w, j) => (j === i ? [pos[0], 0, pos[2]] : w));
             setActorPath(actor.id, next);

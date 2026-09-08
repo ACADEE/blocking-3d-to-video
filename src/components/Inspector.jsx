@@ -4,7 +4,7 @@ import { CAMERA_RIGS } from '../scene/normalize.js';
 import { inferActorType, inferType, TYPE_LABELS } from '../proxies/registry.js';
 import { HUMAN_SPEED } from '../scene/paths.js';
 import ModelPanel from './ModelPanel.jsx';
-import RefImage from './RefImage.jsx';
+import RefImage, { RefThumb } from './RefImage.jsx';
 import { useT } from '../i18n/index.js';
 
 /**
@@ -54,13 +54,21 @@ function Field({ label, value, children }) {
   );
 }
 
-function Row({ active, color, title, subtitle, badge, onClick, testId }) {
+// Un role="button" plutot qu'un <button> : la vignette de reference (RefThumb)
+// est elle-meme un bouton, et un bouton ne peut pas en contenir un autre.
+function Row({ active, color, title, subtitle, badge, onClick, testId, trailing }) {
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       data-testid={testId}
       onClick={onClick}
-      className={`mb-1 flex w-full items-center gap-2 rounded border px-2 py-1.5 text-left transition ${
+      onKeyDown={(e) => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        e.preventDefault();
+        onClick();
+      }}
+      className={`mb-1 flex w-full cursor-pointer items-center gap-2 rounded border px-2 py-1.5 text-left transition ${
         active ? 'border-signal/50 bg-signal/10' : 'border-transparent bg-ink-700/50 hover:bg-ink-700'
       }`}
     >
@@ -74,7 +82,8 @@ function Row({ active, color, title, subtitle, badge, onClick, testId }) {
           {badge}
         </span>
       )}
-    </button>
+      {trailing}
+    </div>
   );
 }
 
@@ -228,11 +237,12 @@ export default function Inspector() {
               badge={TYPE_LABELS[inferActorType(a)]}
               testId={`row-${a.id}`}
               onClick={() => select({ kind: 'actor', id: a.id })}
+              trailing={<RefThumb entityId={a.id} entityName={a.name} />}
             />
           );
         })}
-        {/* L'image de reference appartient a l'element selectionne : elle
-            s'affiche sous lui, pas dans une liste separee. */}
+        {/* Chaque ligne porte deja sa vignette (RefThumb) ; le panneau complet
+            — retrait, URL manuelle — ne s'affiche que sous l'element selectionne. */}
         {selection?.kind === 'actor' && (
           <RefImage
             entityId={selection.id}
@@ -253,6 +263,7 @@ export default function Inspector() {
               badge={TYPE_LABELS[inferType(p, 'generic')]}
               testId={`row-${p.id}`}
               onClick={() => select({ kind: 'prop', id: p.id })}
+              trailing={<RefThumb entityId={p.id} entityName={p.name} />}
             />
           ))}
           {selection?.kind === 'prop' && (
@@ -273,6 +284,7 @@ export default function Inspector() {
             title={z.name}
             subtitle={`${z.width} x ${z.depth} m`}
             onClick={() => select({ kind: 'zone', id: z.id })}
+            trailing={<RefThumb entityId={z.id} entityName={z.name} />}
           />
         ))}
         {selection?.kind === 'zone' && (

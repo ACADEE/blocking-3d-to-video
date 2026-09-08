@@ -100,3 +100,60 @@ export default function RefImage({ entityId, entityName }) {
     </div>
   );
 }
+
+/**
+ * Vignette compacte attachee a une ligne de la liste (acteur, objet, zone).
+ *
+ * RefImage n'apparaissait que sous l'element selectionne : avec quatre
+ * acteurs, l'image de reference se lisait comme un slot unique qu'on
+ * deplacait en cliquant, alors que le modele en garde deja une par element
+ * (`scene.refs[entityId]`). Cette vignette rend cette independance visible :
+ * chaque ligne montre sa propre image, ou son absence, sans qu'il faille la
+ * selectionner.
+ */
+export function RefThumb({ entityId, entityName }) {
+  const t = useT();
+  const scene = useStore((s) => s.scene);
+  const uploadEntityRef = useStore((s) => s.uploadEntityRef);
+  const uploadingRef = useStore((s) => s.uploadingRef);
+  const fileRef = useRef(null);
+
+  const ref = scene?.refs?.[entityId];
+  const busy = uploadingRef === entityId;
+
+  const onPick = (e) => {
+    const file = e.target.files?.[0];
+    if (file) uploadEntityRef(entityId, file, entityName);
+    e.target.value = '';
+  };
+
+  return (
+    <span className="shrink-0">
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          fileRef.current?.click();
+        }}
+        disabled={busy}
+        title={ref ? entityName : t('inspector.reference.add')}
+        className={`flex h-7 w-7 items-center justify-center overflow-hidden rounded border transition-colors ${
+          ref
+            ? 'border-ok/40'
+            : 'border-dashed border-ink-500 text-white/50 hover:border-white/40 hover:text-white'
+        }`}
+      >
+        {busy ? (
+          <Spinner className="h-3 w-3" />
+        ) : ref ? (
+          <img src={ref.url} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+          </svg>
+        )}
+      </button>
+      <input ref={fileRef} type="file" accept="image/*" hidden onChange={onPick} />
+    </span>
+  );
+}

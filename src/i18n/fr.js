@@ -132,6 +132,7 @@ export default {
   'edit.camera.key': 'Poser une cle camera ici',
   'edit.camera.keyHint': 'Enregistre la position de la camera a {time}',
   'edit.camera.keys': '{n} cles camera',
+  'edit.camera.keys.hint': 'Etire une cle verte pour la deplacer, en 3D. Clique le ruban pour inserer une cle. Suppr retire la cle selectionnee.',
   'edit.camera.clear': 'Effacer les cles camera',
   'edit.camera.needView': 'Passe en vue Dessus ou Orbite pour deplacer la camera.',
 

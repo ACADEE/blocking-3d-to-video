@@ -141,6 +141,7 @@ export default function EditToolbar() {
                 <p className="mt-1.5 font-mono text-[11px] text-ok">
                   {t('edit.camera.keys', { n: keys.length })}
                 </p>
+                <p className="mt-1 text-[11px] leading-relaxed text-white/70">{t('edit.camera.keys.hint')}</p>
                 <button type="button" onClick={clearCameraKeys} className="btn-ghost mt-1.5 w-full">
                   {t('edit.camera.clear')}
                 </button>

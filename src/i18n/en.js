@@ -128,6 +128,7 @@ export default {
   'edit.camera.key': 'Key the camera here',
   'edit.camera.keyHint': 'Records the camera position at {time}',
   'edit.camera.keys': '{n} camera keys',
+  'edit.camera.keys.hint': 'Drag a green key to move it, in 3D. Click the ribbon to insert a key. Delete removes the selected one.',
   'edit.camera.clear': 'Clear camera keys',
   'edit.camera.needView': 'Switch to Top or Orbit to move the camera.',
 

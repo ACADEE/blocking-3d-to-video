@@ -324,6 +324,34 @@ export const useStore = create((set, get) => ({
     patchScene({ camera: { ...scene.camera, keys: keys.length >= 2 ? keys : null } });
   },
 
+  /**
+   * Deplace une cle camera existante, a t inchange : c'est le geste de glisser
+   * une poignee sur le ruban vert.
+   */
+  moveCameraKey: (t, position) => {
+    const { scene, patchScene } = get();
+    if (!scene?.camera.keys) return;
+    const round = (v) => Number(v.toFixed(3));
+    const keys = scene.camera.keys.map((k) =>
+      Math.abs(k.t - t) < 1e-3 ? { ...k, position: position.map(round) } : k
+    );
+    patchScene({ camera: { ...scene.camera, keys } });
+  },
+
+  /** Insere une cle entre deux cles existantes, au clic sur le ruban vert. */
+  insertCameraKeyAfter: (afterT, position) => {
+    const { scene, patchScene } = get();
+    const keys = scene?.camera.keys;
+    if (!keys || keys.length < 2) return;
+    const idx = keys.findIndex((k) => Math.abs(k.t - afterT) < 1e-3);
+    if (idx === -1 || idx >= keys.length - 1) return;
+    const round = (v) => Number(v.toFixed(3));
+    const t = round((keys[idx].t + keys[idx + 1].t) / 2);
+    const next = [...keys];
+    next.splice(idx + 1, 0, { t, position: position.map(round) });
+    patchScene({ camera: { ...scene.camera, keys: next } });
+  },
+
   clearCameraKeys: () => {
     const { scene, patchScene } = get();
     if (!scene) return;
